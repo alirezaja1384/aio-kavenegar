@@ -8,7 +8,7 @@ If you need to future information about API document Please visit RESTful Docume
 
 **This project is not compatible with the official package.**
 
-The original repository can be fount [Here](https://github.com/kavenegarkavenegar-python/).
+The original repository can be found [Here](https://github.com/kavenegarkavenegar-python/).
 
 
 ## Installation

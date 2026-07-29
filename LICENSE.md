@@ -1,4 +1,4 @@
-Copyright (c) 2021 Kavenegar Team
+Copyright (c) 2024 Kavenegar Team
 Copyright (c) 2024 Alireza Jafari
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
