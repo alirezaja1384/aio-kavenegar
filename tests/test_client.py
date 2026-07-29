@@ -46,6 +46,9 @@ async def test_proxy_mounts_are_forwarded_to_httpx():
     captured_options = {}
 
     class Response:
+        def raise_for_status(self):
+            pass
+
         def json(self):
             return {"return": {"status": 200}, "entries": []}
 
