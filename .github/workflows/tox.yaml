@@ -6,7 +6,9 @@ on:
   workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # `github.workflow` refers to the caller when this workflow is reused.
+  # Use a distinct namespace so the called workflow cannot cancel its caller.
+  group: tox-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
