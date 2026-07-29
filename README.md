@@ -41,17 +41,17 @@ from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
 
 async def main():
     try:
-        api = AIOKavenegarAPI('Your APIKey', timeout=20)
+        api = AIOKavenegarAPI("Your APIKey", timeout=20)
         params = {
-            'sender': '',#optional
-            'receptor': '',#multiple mobile number, split by comma
-            'message': '',
-        } 
+            "sender": "",  # optional
+            "receptor": "",  # multiple mobile number, split by comma
+            "message": "",
+        }
         response = await api.sms_send(params)
         print(response)
-    except APIException as e: 
+    except APIException as e:
         print(e)
-    except HTTPException as e: 
+    except HTTPException as e:
         print(e)
 
 
@@ -67,18 +67,18 @@ from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
 
 async def main():
     try:
-        api = AIOKavenegarAPI('Your APIKey', timeout=20)
+        api = AIOKavenegarAPI("Your APIKey", timeout=20)
         params = {
-            'receptor': '',
-            'template': '',
-            'token': '',
-            'type': 'sms',#sms vs call
-        }   
+            "receptor": "",
+            "template": "",
+            "token": "",
+            "type": "sms",  # sms vs call
+        }
         response = await api.verify_lookup(params)
         print(response)
-    except APIException as e: 
+    except APIException as e:
         print(e)
-    except HTTPException as e: 
+    except HTTPException as e:
         print(e)
 
 
@@ -94,17 +94,17 @@ from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
 
 async def main():
     try:
-        api = AIOKavenegarAPI('Your APIKey', timeout=20)
+        api = AIOKavenegarAPI("Your APIKey", timeout=20)
         params = {
-            'sender':'["",""]',#array of string as json 
-            'receptor': '["",""]',#array of string as json 
-            'message': '["",""]',#array of string as json 
-        } 
+            "sender": '["",""]',  # array of string as json
+            "receptor": '["",""]',  # array of string as json
+            "message": '["",""]',  # array of string as json
+        }
         response = await api.sms_sendarray(params)
         print(response)
-    except APIException as e: 
+    except APIException as e:
         print(e)
-    except HTTPException as e: 
+    except HTTPException as e:
         print(e)
 
 

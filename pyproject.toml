@@ -1,0 +1,107 @@
+[project]
+name = "aio-kavenegar"
+version = "2.1.2"
+description = "AsyncIO compatible Kavenegar Python library"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["httpx>=0.23.0"]
+license = "MIT"
+license-files = ["LICENSE.md"]
+authors = [{ name = "Alireza Jafari", email = "alirezaja1384@gmail.com" }]
+urls = { "Homepage" = "https://github.com/alirezaja1384/aio-kavenegar" }
+keywords = ["kavenegar", "sms", "asyncio"]
+classifiers = [
+    "Programming Language :: Python",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Communications :: Telephony",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# Flat layout: the package lives at the repository root, not under src/.
+module-root = ""
+module-name = "aio_kavenegar"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.6",
+    "tox>=4.30.3",
+    "tox-uv-bare>=1.36.0",
+]
+
+[tool.tox]
+# tox-uv-bare provisions each environment with the system uv binary, so
+# interpreters are downloaded on demand and dependencies resolve from the
+# same uv.lock used locally.
+requires = ["tox>=4.22", "tox-uv-bare>=1.32"]
+env_list = ["py310", "py311", "py312", "py313", "py314", "lint"]
+
+[tool.tox.env_run_base]
+description = "run the test suite under {base_python}"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+commands = [["pytest", { replace = "posargs", extend = true }]]
+
+[tool.tox.env.lint]
+description = "check formatting and lint rules"
+runner = "uv-venv-runner"
+skip_install = true
+dependency_groups = ["dev"]
+commands = [
+    [
+        "ruff",
+        "check",
+        ".",
+    ],
+    [
+        "ruff",
+        "format",
+        "--check",
+        "--line-length",
+        "88",
+        "tests",
+    ],
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
