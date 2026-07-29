@@ -47,7 +47,7 @@ class AIOKavenegarAPI:
                 'https': 'http://192.168.1.10:3129',
             }
         """
-        self.apikey: str = apikey
+        self._apikey: str = apikey
         self.apikey_mask: str = f"{apikey[:2]}********{apikey[-2:]}"
         self.timeout: int = timeout or DEFAULT_TIMEOUT
         self.headers: dict[str, str] = {
@@ -106,7 +106,7 @@ class AIOKavenegarAPI:
         params: dict | None = None,
     ) -> dict:
         params = self._parse_params_to_json(params or {})
-        url = f"{self.base_url}/{self.version}/{self.apikey}/{action}/{method}.json"
+        url = f"{self.base_url}/{self.version}/{self._apikey}/{action}/{method}.json"
 
         try:
             async with httpx.AsyncClient(mounts=self.mounts) as client:
@@ -116,6 +116,7 @@ class AIOKavenegarAPI:
                     data=params,
                     timeout=self.timeout,
                 )
+                http_response.raise_for_status()
 
                 try:
                     response: KavenegarResponse = http_response.json()
@@ -130,8 +131,8 @@ class AIOKavenegarAPI:
                 except ValueError as e:
                     raise HTTPException(e) from e
 
-        except httpx.RequestError as e:
-            message = str(e).replace(self.apikey, self.apikey_mask)
+        except httpx.HTTPError as e:
+            message = str(e).replace(self._apikey, self.apikey_mask)
             raise HTTPException(message) from None
 
     async def sms_send(self, params: dict | None = None) -> KavenegarResponse:

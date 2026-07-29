@@ -56,8 +56,19 @@ runner = "uv-venv-runner"
 skip_install = true
 dependency_groups = ["dev"]
 commands = [
-    ["ruff", "check", "."],
-    ["ruff", "format", "--check", "--line-length", "79", "tests"],
+    [
+        "ruff",
+        "check",
+        ".",
+    ],
+    [
+        "ruff",
+        "format",
+        "--check",
+        "--line-length",
+        "88",
+        "tests",
+    ],
 ]
 
 [tool.pytest.ini_options]
