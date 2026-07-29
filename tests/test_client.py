@@ -1,8 +1,7 @@
-import json
-import pytest
 from unittest.mock import patch
 
 import httpx
+import pytest
 
 from aio_kavenegar.client import AIOKavenegarAPI
 
@@ -11,9 +10,7 @@ def test_default_url_uses_class_host():
     class CustomHostClient(AIOKavenegarAPI):
         host = "mock.kavenegar.test"
 
-    assert (
-        CustomHostClient("api-key").base_url == "https://mock.kavenegar.test"
-    )
+    assert CustomHostClient("api-key").base_url == "https://mock.kavenegar.test"
 
 
 def test_headers_are_copied_and_merged_per_instance():
@@ -65,9 +62,7 @@ async def test_proxy_mounts_are_forwarded_to_httpx():
         async def post(self, *args, **kwargs):
             return Response()
 
-    client = AIOKavenegarAPI(
-        "api-key", proxies={"https": "http://127.0.0.1:3129"}
-    )
+    client = AIOKavenegarAPI("api-key", proxies={"https": "http://127.0.0.1:3129"})
     with patch("aio_kavenegar.client.httpx.AsyncClient", AsyncClient):
         await client.account_info()
 

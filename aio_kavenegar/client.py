@@ -61,12 +61,8 @@ class AIOKavenegarAPI:
             if http_proxy := proxies.get("http"):
                 mounts["http://"] = httpx.AsyncHTTPTransport(proxy=http_proxy)
             if https_proxy := proxies.get("https"):
-                mounts["https://"] = httpx.AsyncHTTPTransport(
-                    proxy=https_proxy
-                )
-        self.mounts: dict[str, httpx.AsyncBaseTransport] | None = (
-            mounts or None
-        )
+                mounts["https://"] = httpx.AsyncHTTPTransport(proxy=https_proxy)
+        self.mounts: dict[str, httpx.AsyncBaseTransport] | None = mounts or None
 
     @property
     def base_url(self) -> str:
@@ -141,9 +137,7 @@ class AIOKavenegarAPI:
     async def sms_send(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "send", params)
 
-    async def sms_sendarray(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def sms_sendarray(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "sendarray", params)
 
     async def sms_status(self, params: dict | None = None) -> KavenegarResponse:
@@ -157,19 +151,13 @@ class AIOKavenegarAPI:
     async def sms_select(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "select", params)
 
-    async def sms_selectoutbox(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def sms_selectoutbox(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "selectoutbox", params)
 
-    async def sms_latestoutbox(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def sms_latestoutbox(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "latestoutbox", params)
 
-    async def sms_countoutbox(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def sms_countoutbox(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("sms", "countoutbox", params)
 
     async def sms_cancel(self, params: dict | None = None) -> KavenegarResponse:
@@ -191,9 +179,7 @@ class AIOKavenegarAPI:
     ) -> KavenegarResponse:
         return await self._request("sms", "sendbypostalcode", params)
 
-    async def verify_lookup(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def verify_lookup(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("verify", "lookup", params)
 
     async def call_maketts(self, params: dict | None = None) -> KavenegarResponse:
@@ -205,7 +191,5 @@ class AIOKavenegarAPI:
     async def account_info(self) -> KavenegarResponse:
         return await self._request("account", "info")
 
-    async def account_config(
-        self, params: dict | None = None
-    ) -> KavenegarResponse:
+    async def account_config(self, params: dict | None = None) -> KavenegarResponse:
         return await self._request("account", "config", params)
