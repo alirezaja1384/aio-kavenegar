@@ -1,162 +1,147 @@
 # aio-kavenegar
 
-# <a href="http://kavenegar.com/rest.html">Kavenegar RESTful API Document</a>
-If you need to future information about API document Please visit RESTful Document
+An asynchronous Python client for the [Kavenegar REST API](https://kavenegar.com/rest.html). It uses `httpx` and is designed for applications built with `asyncio`.
 
-## Caution !
-**This repository IS NOT AN OFFICIAL KAVENEGAR CLIENT!**
+> This is an independent, community-maintained client. It is not an official Kavenegar package and is not API-compatible with Kavenegar's official Python client.
 
-**This project is not compatible with the official package.**
+## Requirements
 
-The original repository can be found [Here](https://github.com/kavenegarkavenegar-python/).
+- Python 3.10 or later
+- A Kavenegar account and API key
 
+Create an account through the [Kavenegar panel](https://panel.kavenegar.com/Client/Membership/Register), then obtain an API key from your account settings.
+
+> **Identity verification:** You can use an API key for account-level operations, such as retrieving account information, before verification. Kavenegar requires identity verification before you can send SMS messages, verification messages, or voice calls.
 
 ## Installation
-<p> You can install our SDK from pypi through below command </p>
 
-
-```
+```bash
 pip install aio-kavenegar
 ```
-You can download the Python SDK <a href="https://github.com/alirezaja1384/aio-kavenegar/blob/main/kavenegar.py">Here</a> too
-<p>
-Then ,You need to make an account on Kavenegar from <a href="https://panel.kavenegar.com/Client/Membership/Register">Here</a>
-</p>
-<p>
-After that you just need to pick API-KEY up from <a href="http://panel.kavenegar.com/Client/setting/index">My Account</a> section.
 
-Anyway there is good tutorial about <a href="http://gun.io/blog/how-to-github-fork-branch-and-pull-request/">Pull  request</a>
-</p>
+## Quick start
 
-## Usage
+Send an SMS from an async function:
 
-Well, There is an example to Send SMS by Python below. `timeout` parameter is optional in `AIOKavenegarAPI` constructor, default value is set to 10 seconds.
-
-### Send
 ```python
-#!/usr/bin/env python
 import asyncio
+
 from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
 
 
 async def main():
+    api = AIOKavenegarAPI("YOUR_API_KEY")
+
     try:
-        api = AIOKavenegarAPI("Your APIKey", timeout=20)
-        params = {
-            "sender": "",  # optional
-            "receptor": "",  # multiple mobile number, split by comma
-            "message": "",
-        }
-        response = await api.sms_send(params)
-        print(response)
-    except APIException as e:
-        print(e)
-    except HTTPException as e:
-        print(e)
+        result = await api.sms_send(
+            {
+                "receptor": "09120000000",
+                "message": "Hello from aio-kavenegar!",
+                # "sender": "1000xxxx",  # optional
+            }
+        )
+        print(result)
+    except APIException as exc:
+        # Kavenegar returned an application-level error.
+        print(f"Kavenegar error {exc.status}: {exc.message}")
+    except HTTPException as exc:
+        # A transport, HTTP-status, or invalid-response error occurred.
+        print(f"Request failed: {exc}")
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
-### OTP
+
+Every API method is asynchronous and must be awaited. On a successful request, a method returns the API response's `entries` value.
+
+## Verification / OTP
+
+Use a Kavenegar verification template to send a one-time password:
+
 ```python
-#!/usr/bin/env python
-import asyncio
-from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
-
-
-async def main():
-    try:
-        api = AIOKavenegarAPI("Your APIKey", timeout=20)
-        params = {
-            "receptor": "",
-            "template": "",
-            "token": "",
-            "type": "sms",  # sms vs call
-        }
-        response = await api.verify_lookup(params)
-        print(response)
-    except APIException as e:
-        print(e)
-    except HTTPException as e:
-        print(e)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+result = await api.verify_lookup(
+    {
+        "receptor": "09120000000",
+        "template": "verify-template",
+        "token": "123456",
+        "type": "sms",  # or "call"
+    }
+)
 ```
-### Send Bulk
+
+Refer to Kavenegar's documentation for template setup and the complete list of supported parameters.
+
+## Bulk SMS
+
+`sms_sendarray` accepts Python lists, tuples, and dictionaries; the client serializes them as JSON form values where required by Kavenegar.
+
 ```python
-#!/usr/bin/env python
-import asyncio
-from aio_kavenegar import AIOKavenegarAPI, APIException, HTTPException
-
-
-async def main():
-    try:
-        api = AIOKavenegarAPI("Your APIKey", timeout=20)
-        params = {
-            "sender": '["",""]',  # array of string as json
-            "receptor": '["",""]',  # array of string as json
-            "message": '["",""]',  # array of string as json
-        }
-        response = await api.sms_sendarray(params)
-        print(response)
-    except APIException as e:
-        print(e)
-    except HTTPException as e:
-        print(e)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+result = await api.sms_sendarray(
+    {
+        "sender": ["1000xxxx", "1000xxxx"],
+        "receptor": ["09120000000", "09120000001"],
+        "message": ["First message", "Second message"],
+    }
+)
 ```
 
-# Contribution
-Bug fixes, docs, and enhancements welcome! Please let us know <a href="mailto:support@kavenegar.com?Subject=SDK" target="_top">support@kavenegar.com</a>
-<hr>
-<div dir='rtl'>
+## Configuration
 
-## توجه !
-**این یک نسخه رسمی کلاینت کاوه نگار نیست!**
+```python
+api = AIOKavenegarAPI(
+    "YOUR_API_KEY",
+    timeout=20,  # seconds; defaults to 10
+    proxies={
+        "http": "http://127.0.0.1:3128",
+        "https": "http://127.0.0.1:3129",
+    },
+    headers={"X-Request-ID": "request-123"},
+)
+```
 
-**این پروژه با پکیج رسمی کاوه نگار سازگار نیست.**
+Custom headers are merged with the client's default form-encoding headers. Proxy URLs may be supplied for either `http`, `https`, or both.
 
-کلاینت رسمی را می توانید در [اینجا](https://github.com/kavenegar/kavenegar-python/) مشاهده کنید.
+## Available methods
 
+All methods accept an optional `params` dictionary unless otherwise noted. Parameter names and requirements are defined by the [Kavenegar REST API documentation](https://kavenegar.com/rest.html).
 
-## راهنما
+| Area | Methods |
+| --- | --- |
+| SMS | `sms_send`, `sms_sendarray`, `sms_status`, `sms_statuslocalmessageid`, `sms_select`, `sms_selectoutbox`, `sms_latestoutbox`, `sms_countoutbox`, `sms_cancel`, `sms_receive`, `sms_countinbox`, `sms_countpostalcode`, `sms_sendbypostalcode` |
+| Verification | `verify_lookup` |
+| Voice | `call_maketts`, `call_status` |
+| Account | `account_info()` and `account_config` |
 
-### معرفی سرویس کاوه نگار
+For example, retrieve account information without parameters:
 
-کاوه نگار یک وب سرویس ارسال و دریافت پیامک و تماس صوتی است که به راحتی میتوانید از آن استفاده نمایید.
+```python
+account = await api.account_info()
+```
 
-### ساخت حساب کاربری
+## Error handling
 
-اگر در وب سرویس کاوه نگار عضو نیستید میتوانید از [لینک عضویت](http://panel.kavenegar.com/client/membership/register) ثبت نام  و اکانت آزمایشی برای تست API دریافت نمایید.
+The package exposes two exception types:
 
-### مستندات
+- `APIException`: Kavenegar returned a non-success application status. Its `status` and `message` attributes contain the API error details.
+- `HTTPException`: a network failure, non-success HTTP response, or invalid JSON response prevented the request from completing.
 
-برای مشاهده اطلاعات کامل مستندات [وب سرویس پیامک](http://kavenegar.com/وب-سرویس-پیامک.html)  به صفحه [مستندات وب سرویس](http://kavenegar.com/rest.html) مراجعه نمایید.
+The client masks the API key in HTTP error messages and in its string representation.
 
-### راهنمای فارسی
+## Development
 
-در صورتی که مایل هستید راهنمای فارسی کیت توسعه کاوه نگار را مطالعه کنید به صفحه [کد ارسال پیامک](http://kavenegar.com/sdk.html) مراجعه نمایید.
+Install the development dependencies, then run the tests and lint checks:
 
-### اطالاعات بیشتر
-برای مطالعه بیشتر به صفحه معرفی
-[وب سرویس اس ام اس ](http://kavenegar.com)
-کاوه نگار
-مراجعه نمایید .
+```bash
+uv sync --group dev
+uv run pytest
+uv run ruff check .
+uv run ruff format --check --line-length 88 tests
+```
 
- اگر در استفاده از کیت های سرویس کاوه نگار مشکلی یا پیشنهادی  داشتید ما را با یک Pull Request  یا  ارسال ایمیل به support@kavenegar.com  خوشحال کنید.
- 
-##
-![http://kavenegar.com](http://kavenegar.com/public/images/logo.png)		
+## Contributing
 
-[http://kavenegar.com](http://kavenegar.com)	
+Bug reports, documentation improvements, and pull requests are welcome. Please include tests for behavior changes where practical.
 
-</div>
+## License
 
-
-
+This project is released under the [MIT License](LICENSE.md).
