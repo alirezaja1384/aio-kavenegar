@@ -1,21 +1,15 @@
 import json
 
-from typing import Literal
+from typing import Dict, Literal, Mapping, Optional
 
 import httpx
 
 from aio_kavenegar.exceptions import APIException, HTTPException
 from aio_kavenegar.types import KavenegarResponse
 
-
 # Default requests timeout in seconds.
 DEFAULT_TIMEOUT: int = 10
-DEFAULT_HOST: str = "api.kavenegar.com"
-DEFAULT_HEADERS: dict = {
-    "Accept": "application/json",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "charset": "utf-8",
-}
+ProxyConfiguration = Optional[Mapping[str, str]]
 
 
 class AIOKavenegarAPI:
@@ -23,46 +17,60 @@ class AIOKavenegarAPI:
     https://kavenegar.com/rest.html
     """
 
+    version = "v1"
+    host = "api.kavenegar.com"
+    default_headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "charset": "utf-8",
+    }
+
     def __init__(
         self,
         apikey: str,
-        timeout: int = DEFAULT_TIMEOUT,
-        host: str = DEFAULT_HOST,
-        headers: dict = DEFAULT_HEADERS,
-        proxies: dict | None = None,
-        secure: bool = True,
+        timeout: Optional[int] = None,
+        proxies: ProxyConfiguration = None,
+        headers: Optional[Mapping[str, str]] = None,
     ) -> None:
         """
-        :param str apikey: Kavengera API Key
+        :param str apikey: Kavenegar API Key
         :param int timeout: request timeout, default is 10
-        :param str host: Kavenegar API host, default is `api.kavenegar.com`
         :param dict headers: headers used when requesting Kavenegar resources, default:
             {
                 "Accept": "application/json",
                 "Content-Type": "application/x-www-form-urlencoded",
                 "charset": "utf-8",
             }
-        :param dict proxies: Dictionary mapping protocol to the URL of the proxy:
+        :param proxies: Dictionary mapping protocol to proxy URL:
             {
                 'http': 'http://192.168.1.10:3128',
                 'https': 'http://192.168.1.10:3129',
             }
         """
-        self.version: str = "v1"
-        self.host: str = host
         self.apikey: str = apikey
         self.apikey_mask: str = f"{apikey[:2]}********{apikey[-2:]}"
-        self.timeout: int = timeout
-        self.headers: dict = headers
-        if not proxies:
-            self.mounts: dict = None
-        else:
-            self.mounts: dict = {}
-            if http := proxies.get("http"):
-                self.mounts.update({"http://": httpx.HTTPTransport(proxy=http)})
-            if https := proxies.get("https"):
-                self.mounts.update({"https://": httpx.HTTPTransport(proxy=https)})
-        self.secure = secure
+        self.timeout: int = timeout or DEFAULT_TIMEOUT
+        self.headers: Dict[str, str] = {
+            **type(self).default_headers,
+            **(headers or {}),
+        }
+        self.proxies = proxies
+
+        mounts: Dict[str, httpx.AsyncBaseTransport] = {}
+        if proxies:
+            if http_proxy := proxies.get("http"):
+                mounts["http://"] = httpx.AsyncHTTPTransport(proxy=http_proxy)
+            if https_proxy := proxies.get("https"):
+                mounts["https://"] = httpx.AsyncHTTPTransport(
+                    proxy=https_proxy
+                )
+        self.mounts: Optional[Dict[str, httpx.AsyncBaseTransport]] = (
+            mounts or None
+        )
+
+    @property
+    def base_url(self) -> str:
+        return f"https://{self.host}"
 
     def __repr__(self) -> str:
         return "kavenegar.AIOKavenegarAPI({!r})".format(self.apikey_mask)
@@ -70,22 +78,24 @@ class AIOKavenegarAPI:
     def __str__(self) -> str:
         return "kavenegar.AIOKavenegarAPI({!s})".format(self.apikey_mask)
 
-    def _pars_params_to_json(self, params: dict) -> dict:
+    def _parse_params_to_json(self, params: dict) -> dict:
         """
-        Kavenegar bug, the api server expects the parameters in a JSON-like array format,
-        but the requests library form-encode each key-value pair
+        Ensure that iterable or mapping parameters are encoded as JSON strings.
 
-        Params (dict):
-        { sender: ["30002626", "30002627", "30002727", ], }
+        Some Kavenegar endpoints expect array- or object-like values to be
+        provided as JSON strings when sent as form data. Without this
+        conversion, form encoding will turn a list like
+        `sender=["30002626","30002627"]` into repeated keys:
+        `sender=30002626&sender=30002627`, which the API does not accept.
 
-        request behavior:
-        sender=30002626&sender=30002627&sender=30002727
+        This helper converts values that are `dict`, `list`, or `tuple`
+        into their JSON representation, leaving other values unchanged.
 
-        Server expectation:
-        sender=["30002626","30002627","30002727"]
+        Example:
+        Input params: {"sender": ["30002626", "30002627"]}
+        Output params: {"sender": "[\"30002626\", \"30002627\"]"}
         """
-        # Convert lists to JSON-like strings
-        formatted_params = {}
+        formatted_params: dict = {}
         for key, value in params.items():
             if isinstance(value, (dict, list, tuple)):
                 formatted_params[key] = json.dumps(value)
@@ -99,8 +109,8 @@ class AIOKavenegarAPI:
         method: str,
         params: dict = {},
     ) -> dict:
-        params: dict = self._pars_params_to_json(params)
-        url = f"{"https://" if self.secure else "http://"}{self.host}/{self.version}/{self.apikey}/{action}/{method}.json"
+        params: dict = self._parse_params_to_json(params)
+        url = f"{self.base_url}/{self.version}/{self.apikey}/{action}/{method}.json"
 
         try:
             async with httpx.AsyncClient(mounts=self.mounts) as client:
@@ -118,7 +128,7 @@ class AIOKavenegarAPI:
                         return response["entries"]
                     else:
                         raise APIException(
-                            f"APIException[{response["return"]["status"]}] {response["return"]["message"]}"
+                            f'APIException[{response["return"]["status"]}] {response["return"]["message"]}'
                         )
                 except ValueError as e:
                     raise HTTPException(e) from e
@@ -136,7 +146,9 @@ class AIOKavenegarAPI:
     async def sms_status(self, params: dict = {}) -> KavenegarResponse:
         return await self._request("sms", "status", params)
 
-    async def sms_statuslocalmessageid(self, params: dict = {}) -> KavenegarResponse:
+    async def sms_statuslocalmessageid(
+        self, params: dict = {}
+    ) -> KavenegarResponse:
         return await self._request("sms", "statuslocalmessageid", params)
 
     async def sms_select(self, params: dict = {}) -> KavenegarResponse:
@@ -160,10 +172,14 @@ class AIOKavenegarAPI:
     async def sms_countinbox(self, params: dict = {}) -> KavenegarResponse:
         return await self._request("sms", "countinbox", params)
 
-    async def sms_countpostalcode(self, params: dict = {}) -> KavenegarResponse:
+    async def sms_countpostalcode(
+        self, params: dict = {}
+    ) -> KavenegarResponse:
         return await self._request("sms", "countpostalcode", params)
 
-    async def sms_sendbypostalcode(self, params: dict = {}) -> KavenegarResponse:
+    async def sms_sendbypostalcode(
+        self, params: dict = {}
+    ) -> KavenegarResponse:
         return await self._request("sms", "sendbypostalcode", params)
 
     async def verify_lookup(self, params: dict = {}) -> KavenegarResponse:
