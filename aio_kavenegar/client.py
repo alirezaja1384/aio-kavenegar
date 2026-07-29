@@ -128,7 +128,8 @@ class AIOKavenegarAPI:
                         return response["entries"]
                     else:
                         raise APIException(
-                            f'APIException[{response["return"]["status"]}] {response["return"]["message"]}'
+                            response["return"]["status"],
+                            response["return"]["message"],
                         )
                 except ValueError as e:
                     raise HTTPException(e) from e
